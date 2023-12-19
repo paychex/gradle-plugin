@@ -9,7 +9,6 @@ import java.nio.charset.Charset;
  * @see <a href="https://github.com/jenkinsci/ant-plugin/blob/master/src/main/java/hudson/tasks/_ant/AntConsoleAnnotator.java">AntConsoleAnnotator</a>
  */
 public final class GradleConsoleAnnotator extends AbstractGradleLogProcessor {
-
     private final boolean annotateGradleOutput;
     private final BuildScanLogScanner buildScanLogScanner;
 
@@ -26,6 +25,7 @@ public final class GradleConsoleAnnotator extends AbstractGradleLogProcessor {
     protected void processLogLine(String line) throws IOException {
         // TODO: do we need to trim EOL?
         line = trimEOL(line);
+        line = trimTimestamp(line);
 
         if (annotateGradleOutput) {
             if (line.startsWith(":") || line.startsWith("> Task :")) { // put the annotation
@@ -38,5 +38,15 @@ public final class GradleConsoleAnnotator extends AbstractGradleLogProcessor {
         }
 
         buildScanLogScanner.scanLine(line);
+    }
+
+    // Removes timestamps injected by the timestamper plugin
+    private String trimTimestamp(String line) {
+        // Quick way to check if the line starts with a timestamp without resorting to an expensive regex
+        if (line.length() > 27 && line.charAt(0) == '[' && "Z] ".equals(line.substring(24, 27))) {
+            return line.substring(27);
+        }
+
+        return line;
     }
 }
